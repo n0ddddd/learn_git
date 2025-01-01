@@ -1,0 +1,102 @@
+{
+    "inbounds": [
+        {
+            "port": 20100,
+            "protocol": "vless",
+            "tag": "VLESSReality",
+            "settings": {
+                "clients": [
+                    {
+                        "id": "156aa1eb-7e64-4295-b8e7-0709affc4802",
+                        "email": "156aa1eb-vless_reality_vision",
+                        "flow": "xtls-rprx-vision"
+                    }
+                ],
+                "decryption": "none",
+                "fallbacks": [
+                    {
+                        "dest": "31305",
+                        "xver": 1
+                    }
+                ]
+            },
+            "streamSettings": {
+                "network": "tcp",
+                "security": "reality",
+                "realitySettings": {
+                    "show": false,
+                    "dest": "www.swift.com:443",
+                    "xver": 0,
+                    "serverNames": [
+                        "www.swift.com"
+                    ],
+                    "privateKey": "qEK_h_z2Z_R3R3fkI3Z_DC6K04QhtnorsIEgCqSsnmI",
+                    "publicKey": "2clFD3ctDc6vQy7GfPmU5RHF8GMXlsjLCGXnJy9vdS0",
+                    "maxTimeDiff": 70000,
+                    "shortIds": [
+                        "",
+                        "6ba85179e30d4fc2"
+                    ]
+                }
+            }
+        }
+    ],
+    "outbounds": [
+        {
+            "protocol": "freedom"
+        },
+        {
+            "tag": "warp",
+            "protocol": "socks",
+            "settings": {
+                "servers": [
+                    {
+                        "address": "127.0.0.1",
+                        "port": 40000
+                    }
+                ]
+            }
+        },
+        {
+            "tag": "WARP-socks5-v4",
+            "protocol": "freedom",
+            "settings": {
+                "domainStrategy": "UseIPv4"
+            },
+            "proxySettings": {
+                "tag": "warp"
+            }
+        },
+        {
+            "tag": "WARP-socks5-v6",
+            "protocol": "freedom",
+            "settings": {
+                "domainStrategy": "UseIPv6"
+            },
+            "proxySettings": {
+                "tag": "warp"
+            }
+        }
+    ],
+    "routing": {
+        "rules": [
+            {
+                "type": "field",
+                "domain": [
+                    "geosite:openai",
+                    "ip.gs"
+                ],
+                "outboundTag": "WARP-socks5-v4"
+            },
+            {
+                "type": "field",
+                "domain": [
+                    "geosite:google",
+                    "geosite:netflix",
+                    "p3terx.com"
+                ],
+                "outboundTag": "WARP-socks5-v6"
+            }
+        ]
+    }
+}

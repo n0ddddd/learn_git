@@ -1,0 +1,63 @@
+while IFS=+ read -r -a tablename; do
+    for t in ${tablename[@]};do
+        tablename1=$(echo "$t" | xargs)
+        echo $tablename1
+    done
+done < XDXT2_tablelist
+
+
+
+
+accountdb="xu"
+pwddb="xu123"
+login_times=0
+while :; do 
+    if [[ $login_times -ge 3 ]];then
+        echo "You have try 3 times,please wait 10 mins!"
+        exit
+    fi
+
+    read -p "input your account:" account
+    read -p "input your pwd:" pwd
+    if [[ "$account" == "$accountdb" ]] && [[ "$pwddb" == "$pwd" ]]; then
+        echo "Login successful!"
+        break
+    else
+        echo "Error account or password!"
+        let login_times++
+    fi         
+done
+
+accountdb="xu"
+pwddb="xu123"
+while :; do 
+        read -p "input your account:" account
+        read -p "input your pwd:" pwd
+        if [[ "$account" == "$accountdb" ]] && [[ "$pwddb" == "$pwd" ]]; then
+            echo "Login successful!"
+            break
+        else
+            echo "Error account or password!"
+            let login_times++
+        fi
+        if [[ $login_times -eq 3 ]]; then
+        echo "You have try 3 times,please wait 10 mins!"
+        exit      
+        fi
+done
+
+#!/bin/bash
+
+ip="192.168.68.180"
+user="root"
+pwd="xujun123"
+cmd="uptime"
+
+expect <<EOF
+spawn ssh $user@$ip $cmd
+expect {
+"yes/no" {send "yes\n";exp_continue}
+"assword" {send "$pwd\n"}
+}
+expect eof
+EOF
