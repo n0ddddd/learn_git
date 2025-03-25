@@ -111,3 +111,7 @@ su - "$INSTANCE_NAME" -c "
 
 
 ····
+
+if [[ $INSTANCE_NAME == "mname" ]];then 
+ 
+fi

@@ -1,0 +1,148 @@
+
+dblogin userid c##ogg@pdb2,password ogg123
+
+create user test01 identified by xujun123;
+grant dba to test01;
+create table test01.biao1 (id number(8) primary key,name varchar2(8));
+create table test01.biao2 (id number(8) primary key,name varchar2(8));
+insert into test01.biao1 values(1,'dd');
+insert into test01.biao2 values(1,'xx');
+commit;
+
+
+mgr进程
+
+edit param mgr
+port 7809
+DYNAMICPORTLIST 7810-7909
+AUTOSTART EXTRACT *
+AUTORESTART EXTRACT *,RETRIES 5,WAITMINUTES 3
+PURGEOLDEXTRACTS /ogg/dirdat/*,usecheckpoints, minkeepdays 3
+LAGREPORTMINUTES 1
+LAGINFOMINUTES 15
+LAGCRITICALMINUTES 45
+
+
+全局参数
+edit param ./GLOBALS
+ggschema c##ogg
+
+添加需要的表
+add trandata test01.*
+add schematrandata test01  
+capture tabledef test01.* 
+
+抽取进程
+edit param ext1
+
+EXTRACT ext1
+USERID c##ogg@orcla, PASSWORD ogg123
+SETENV (NLS_LANG=AMERICAN_AMERICA.AL32UTF8)
+EXTTRAIL /ogg/dirdat/ex
+WARNLONGTRANS 12H, CHECKINTERVAL 30M
+DISCARDFILE /ogg/dirrpt/ext1.dsc, APPEND, MEGABYTES 200
+TABLE pdb2.test01.*;
+
+
+添加进程
+ADD EXTRACT ext1, INTEGRATED TRANLOG, BEGIN now
+配置trail文件
+ADD EXTTRAIL /ogg/dirdat/ex, EXTRACT ext1, MEGABYTES 1
+注册进程
+register extract ext1 database container(pdb2)
+
+
+投递进程
+edit param pu1
+
+extract pu1
+userid c##ogg@orcla,password ogg123
+rmthost 192.168.68.66,mgrport 7809
+rmttrail /ogg/dirdat/rt
+discardfile  /ogg/dirrpt/pum1.dsc,append,megabytes 200
+TABLE pdb2.test01.*;
+
+
+添加刚才配置的pump进程  
+add extract pu1,exttrailsource /ogg/dirdat/ex
+add rmttrail /ogg/dirdat/rt, extract pu1, megabytes 200
+
+
+create tablespace ogg_tbs datafile '/oradata/orcla/pdb2/ogg_tbs01.dbf' size 200m autoextend on maxsize 10g;
+create user ogg identified by ogg123 default tablespace ogg_tbs account unlock;
+grant connect,resource,dba to ogg;
+
+
+目标端
+
+pdb3
+
+create tablespace ogg_tbs datafile '/oradata/orclb/pdb3/ogg_tbs01.dbf' size 200m autoextend on maxsize 10g;
+create user ogg identified by ogg123 default tablespace ogg_tbs account unlock;
+grant connect,resource,dba to ogg;
+
+edit param mgr
+port 7809 
+DYNAMICPORTLIST 7810-7909
+AUTOSTART replicat *
+AUTORESTART replicat *,RETRIES 5,WAITMINUTES 3
+PURGEOLDEXTRACTS /ogg/dirdat/*,usecheckpoints, minkeepdays 3
+LAGREPORTMINUTES 1
+LAGINFOMINUTES 15
+LAGCRITICALMINUTES 45
+
+edit params ./GLOBALS
+
+GGSCHEMA ogg
+CHECKPOINTTABLE ogg.checkpointtable
+add checkpointtable ogg.checkpointtable
+
+复制进程
+add replicat rep1 exttrail /ogg/dirdat/rt,checkpointtable ogg.checkpointtable
+
+edit params rep1
+
+replicat rep1
+SETENV (NLS_LANG=AMERICAN_AMERICA.AL32UTF8)
+userid ogg@pdb3,password ogg123
+discardfile  /ogg/dirrpt/rep1.dsc,append,megabytes 200
+map pdb2.test01.biao1,target test01.biao1;
+map pdb2.test01.biao2,target test01.biao2;
+
+
+
+
+导出数据
+create directory ogg_dir as '/backup';
+grant read,write on directory ogg_dir to public;
+expdp c##ogg@pdb2 schemas=test01 directory=ogg_dir dumpfile=test01.dmp logfile=test01.log flashback_scn=3148922
+
+导入
+create directory ogg_dir as '/backup';
+grant read,write on directory ogg_dir to public;
+impdp ogg/ogg123@pdb3 directory=ogg_dir dumpfile=test01.dmp logfile=test01.log
+
+
+start replicat rep1,aftercsn 3148922
+
+
+
+
+
+
+
+
+replicat rep1
+SETENV (NLS_LANG=AMERICAN_AMERICA.AL32UTF8)
+userid ogg@pdb3,password ogg123
+discardfile  /ogg/dirrpt/rep1.dsc,append,megabytes 200
+DISCARDROLLOVER AT 02:00
+ddloptions report
+InsertAllRecords
+map pdb2.test01.biao1,target test01.biao1,
+COLMAP (
+USEDEFAULTS,
+SRC_TIME=@GETENV('GGHEADER','COMMITTIMESTAMP'),
+TRG_TIME=@DATENOW (),
+OPT_TYPE=@GETENV('GGHEADER','OPTYPE'),
+BEFORE_AFTER=@getenv('GGHEADER','BEFOREAFTERINDICATOR'));
