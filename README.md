@@ -3,5 +3,5 @@ earn
 earn 
 earn 
 earn 
-earn 
+learn 
 
