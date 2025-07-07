@@ -1,0 +1,29 @@
+# Oracle Data Pump Export 参数文件
+# 文件名: par.file
+# 用途: 从源数据库导出指定表的数据
+
+# 目录配置
+DIRECTORY=data_mig
+
+# 导出文件配置
+DUMPFILE=export_%U.dmp
+LOGFILE=export.log
+
+# 表配置
+TABLES=DATA_MIG.UH_APPOINT_RECORD_LOG,DATA_MIG.UH_IP_RECORD_LOG
+
+# 性能配置
+PARALLEL=4
+FILESIZE=10240M
+
+# 压缩和优化配置
+COMPRESSION=ALL
+EXCLUDE=STATISTICS
+CLUSTER=N
+
+# 数据过滤条件
+QUERY=DATA_MIG.UH_APPOINT_RECORD_LOG:"WHERE ts < '2021-01-01 00:00:00'"
+QUERY=DATA_MIG.UH_IP_RECORD_LOG:"WHERE ts < '2021-01-01 00:00:00'"
+
+# 其他配置
+CONTENT=ALL 

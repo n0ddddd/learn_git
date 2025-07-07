@@ -1,0 +1,29 @@
+# Oracle Data Pump Import 参数文件
+# 文件名: impar.file
+# 用途: 将导出的数据导入到目标数据库
+
+# 目录配置
+DIRECTORY=data_mig
+
+# 导入文件配置
+DUMPFILE=export_%U.dmp
+LOGFILE=import.log
+
+# 性能配置
+PARALLEL=4
+
+# 模式映射配置
+REMAP_SCHEMA=DATA_MIG:SCOTT
+
+# 表名映射配置
+REMAP_TABLE=UH_APPOINT_RECORD_LOG:HIS_UH_APPOINT_RECORD_LOG
+REMAP_TABLE=UH_IP_RECORD_LOG:HIS_UH_IP_RECORD_LOG
+
+# 表空间映射配置
+REMAP_TABLESPACE=USERS:XUJUN1
+
+# 表存在时的处理方式
+TABLE_EXISTS_ACTION=APPEND
+
+# 其他配置
+CONTENT=ALL 
